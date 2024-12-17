@@ -12,8 +12,13 @@ export class RateLimiter {
   addToQueue(items: any[]) {
     this.queue.push(...items);
     if (!this.processing) {
-      this.processQueue();
+      this.processQueue(); // Start processing if not already processing
     }
+  }
+
+  // Make getNextRow public
+  public getNextRow(): any | undefined {
+    return this.queue.shift(); // Get the next row from the queue
   }
 
   private async processQueue() {

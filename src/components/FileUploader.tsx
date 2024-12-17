@@ -1,8 +1,8 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { Upload } from 'lucide-react';
 import { parseFile, ParsedData } from '../utils/fileParser';
 import { RateLimiter } from '../utils/rateLimiter';
-import { uploadRow } from '../services/api';
+import { uploadRow, getProcessedData } from '../services/api';
 
 const REQUESTS_PER_MINUTE = 120;
 
@@ -12,18 +12,33 @@ export default function FileUploader() {
   const [progress, setProgress] = useState(0);
   const [totalRows, setTotalRows] = useState(0);
   const [processedRows, setProcessedRows] = useState(0);
+  const [isCompleted, setIsCompleted] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false); // Tracks the downloading state
+  const [downloading, setDownloading] = useState(false);
 
-  const rateLimiter = new RateLimiter(REQUESTS_PER_MINUTE, async (row) => {
-    await uploadRow(row);
-    setProcessedRows((prev) => prev + 1);
+  const rateLimiter = new RateLimiter(REQUESTS_PER_MINUTE, async () => {
+    const row = rateLimiter.getNextRow();
+    if (row) {
+      await uploadRow(row, selectedFile?.name);
+      setProcessedRows((prev) => prev + 1);
+    }
   });
 
   const handleFileSelection = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
       setSelectedFile(file);
+      setIsCompleted(false); // Reset completion state
     }
   }, []);
+
+  useEffect(() => {
+    if (totalRows > 0 && processedRows === totalRows) {
+      setIsUploading(false);
+      setIsCompleted(true);
+    }
+    setProgress(Math.round((processedRows / totalRows) * 100) || 0);
+  }, [processedRows, totalRows]);
 
   const handleProcessFile = useCallback(async () => {
     if (!selectedFile) {
@@ -35,30 +50,63 @@ export default function FileUploader() {
       setIsUploading(true);
       setProgress(0);
       setProcessedRows(0);
+      setIsCompleted(false);
 
       const parsedData: ParsedData = await parseFile(selectedFile);
-
       setTotalRows(parsedData.data.length);
       rateLimiter.addToQueue(parsedData.data);
-
-      // Update progress periodically
-      const progressInterval = setInterval(() => {
-        const processed = processedRows;
-        const total = parsedData.data.length;
-        const newProgress = Math.round((processed / total) * 100);
-        setProgress(newProgress);
-
-        if (processed === total) {
-          clearInterval(progressInterval);
-          setIsUploading(false);
-        }
-      }, 500);
     } catch (error) {
       console.error('Error processing file:', error);
       alert('Error processing file. Please try again.');
       setIsUploading(false);
     }
-  }, [selectedFile, processedRows]);
+  }, [selectedFile]);
+
+  const handleReset = () => {
+    setSelectedFile(null);
+    setTotalRows(0);
+    setProcessedRows(0);
+    setProgress(0);
+    setIsCompleted(false);
+  };
+
+
+  const downloadProcessedFile = async () => {
+    try {
+      // Set downloading state before the request starts
+      setIsDownloading(true);
+      setDownloading(true);
+
+      // Fetch the processed CSV data from the server
+      const data = await getProcessedData(selectedFile?.name);
+
+      if (data && data.csvContent) {
+        const csvContent = data.csvContent; // The CSV data as a string
+
+        // Create a Blob from the CSV string
+        const blob = new Blob([csvContent], { type: 'text/csv' });
+        const url = URL.createObjectURL(blob);
+
+        // Create an anchor element and programmatically click it to trigger the download
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = selectedFile?.name.replace(/\.[^/.]+$/, '') + '_processed.csv'; // Add '_processed' suffix to filename
+        a.click();
+
+        // Clean up the URL object after download
+        URL.revokeObjectURL(url);
+      } else {
+        console.error("No CSV data available");
+      }
+
+    } catch (error) {
+      console.error("Error downloading processed file:", error);
+    } finally {
+      // Reset the downloading states after the download is completed
+      setIsDownloading(false);
+      setDownloading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
@@ -102,7 +150,7 @@ export default function FileUploader() {
           </div>
         )}
 
-        {selectedFile && (
+        {selectedFile && !isCompleted && (
           <button
             onClick={handleProcessFile}
             className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition disabled:bg-gray-300"
@@ -124,6 +172,32 @@ export default function FileUploader() {
               Processed {processedRows} of {totalRows} rows ({progress}%)
             </div>
           </div>
+        )}
+
+        {isCompleted && (
+          <>
+            <div className="mt-4">
+              <p className="text-center text-green-600 font-medium mb-4">Processing complete!</p>
+              {/* // JSX for the button with dynamic text and disabled state */}
+              <button
+                onClick={downloadProcessedFile}
+                className="w-full bg-green-600 text-white py-2 rounded-lg hover:bg-green-700 transition disabled:bg-gray-300"
+                disabled={isDownloading} // Disable the button when downloading
+              >
+                {downloading ? 'Downloading...' : 'Download Processed File'} {/* Show "Downloading..." while fetching */}
+              </button>
+            </div>
+
+            <div className="mt-4">
+
+              <button
+                onClick={handleReset}
+                className="w-full bg-orange-500 text-white py-2 rounded-lg hover:bg-orange-600 transition"
+              >
+                Make Another Request
+              </button>
+            </div>
+          </>
         )}
       </div>
     </div>

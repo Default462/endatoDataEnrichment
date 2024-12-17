@@ -17,9 +17,9 @@ export const parseFile = (file: File): Promise<ParsedData> => {
           errors: results.errors,
         });
       },
-      error: (error) => {
-        reject(error);
-      },
+      // error: (error) => {
+      //   reject(error);
+      // },
     });
   });
 };
