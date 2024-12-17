@@ -1,23 +1,23 @@
-const API_BASE_URL = 'your-api-base-url';
+// const SUPABASE_API_URL = 'your-api-base-url';
+const SUPABASE_API_URL = import.meta.env.VITE_SUPABASE_API_URL;
 
 export const uploadRow = async (rowData: any): Promise<void> => {
-  console.log(rowData)
-  setTimeout("success",2000)
-  // return "success"
-  // try {
-  //   const response = await fetch(`${API_BASE_URL}/data`, {
-  //     method: 'POST',
-  //     headers: {
-  //       'Content-Type': 'application/json',
-  //     },
-  //     body: JSON.stringify(rowData),
-  //   });
+  
+  try {
+    const response = await fetch(`https://mzouiorqhravqybadngk.supabase.co/`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(rowData),
+    });
 
-  //   if (!response.ok) {
-  //     throw new Error(`HTTP error! status: ${response.status}`);
-  //   }
-  // } catch (error) {
-  //   console.error('Error uploading row:', error);
-  //   throw error;
-  // }
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+  } catch (error) {
+    console.error('Error uploading row:', error);
+    // throw error;
+    
+  }
 };

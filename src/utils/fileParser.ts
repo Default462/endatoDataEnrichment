@@ -9,6 +9,8 @@ export const parseFile = (file: File): Promise<ParsedData> => {
   return new Promise((resolve, reject) => {
     Papa.parse(file, {
       header: true,
+      skipEmptyLines: true, // Ignore completely empty lines
+      dynamicTyping: true,  // Parse numbers and null values correctly
       complete: (results) => {
         resolve({
           data: results.data,

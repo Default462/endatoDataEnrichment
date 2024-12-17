@@ -19,6 +19,7 @@ export default function LoginForm() {
     try {
       console.log(email, password)
       await signIn(email, password);
+      // await signIn("demo@example.com", "demo123456");
       navigate('/');
     } catch (err) {
       setError('Failed to sign in. Please check your credentials.');
