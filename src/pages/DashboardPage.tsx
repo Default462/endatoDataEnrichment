@@ -67,7 +67,7 @@ export function DashboardPage() {
             user.email,
             (progress) => setUploadProgress(progress)
           );
-          
+          alert("upload successfull, please check after 1 hours for enriched data n download section")
           // Clear the file input
           event.target.value = '';
           setError(null);

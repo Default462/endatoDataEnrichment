@@ -1,12 +1,21 @@
 import { FileText, Upload } from 'lucide-react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';  // Import useNavigate
 import { useAuth } from '../hooks/useAuth';
 
 export function Navigation() {
   const { logout } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate(); // Initialize the navigate function
 
   const isActive = (path: string) => location.pathname === path;
+
+  const handleLogout = () => {
+    // Call the logout function
+    logout();
+    
+    // Navigate to the login page immediately after logout
+    navigate('/login');  // Redirect to the login page
+  };
 
   return (
     <nav className="bg-white shadow-sm">
@@ -37,7 +46,7 @@ export function Navigation() {
             </Link>
           </div>
           <button
-            onClick={logout}
+            onClick={handleLogout} // Use handleLogout here
             className="px-3 py-2 rounded-md text-sm font-medium text-gray-600 hover:text-gray-900"
           >
             Logout

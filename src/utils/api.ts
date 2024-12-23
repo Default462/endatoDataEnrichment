@@ -79,6 +79,7 @@ export async function uploadRecordsSequentially(
 
   if (errors.length > 0) {
     const errorMessage = `${successCount} records uploaded successfully. ${errors.length} records failed.`;
+    // alert("upload successfull, please check after 1 hours for enriched data n download section")
     if (successCount === 0) {
       throw new Error(errorMessage);
     } else {

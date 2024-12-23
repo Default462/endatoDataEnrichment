@@ -43,8 +43,8 @@ export function DownloadsPage() {
       }
     };
     // Call the function to fetch filenames on component mount
-    fetchFilenames();
-  }, []);
+    fetchFilenames()
+  }, [user]);
 
   const handleDownload = async (file: FileRecord) => {
     try {
