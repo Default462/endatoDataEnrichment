@@ -7,16 +7,7 @@ import axios from 'axios';
 
 export function DownloadsPage() {
   const { user } = useAuth();
-  const [files, setFiles] = useState<FileRecord[]>([
-    {
-      id: '1',
-      name: 'sample-data.csv',
-      size: 1024,
-      created_at: '2024-02-28T10:00:00Z',
-      user_id: '123',
-      url: 'https://example.com/files/sample-data.csv'
-    }
-  ]);
+  const [files, setFiles] = useState<FileRecord[]>([]);
 
 
   useEffect(() => {
@@ -43,7 +34,7 @@ export function DownloadsPage() {
       }
     };
     // Call the function to fetch filenames on component mount
-    fetchFilenames()
+    setTimeout(fetchFilenames(), 2000);
   }, [user]);
 
   const handleDownload = async (file: FileRecord) => {
